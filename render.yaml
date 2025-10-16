@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: campus-teranga-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    # Add your MongoDB Atlas connection string here
+    # - key: MONGODB_URI
+    #   value: mongodb+srv://username:password@cluster.mongodb.net/campus_teranga
+    # Add your JWT secret here
+    # - key: JWT_SECRET
+    #   value: your_strong_jwt_secret_here
+    # Add your frontend URL here
+    # - key: FRONTEND_URL
+    #   value: https://your-frontend-url.com
