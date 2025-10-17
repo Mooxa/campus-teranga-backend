@@ -95,9 +95,14 @@ Use the seeding endpoints to manage your database:
 GET https://your-app-name.onrender.com/api/seed/stats
 ```
 
-#### Seed Production Data
+#### Seed Production Data (Robust Method)
 ```bash
 POST https://your-app-name.onrender.com/api/seed/seed
+```
+
+#### Seed Production Data (Original Method - Fallback)
+```bash
+POST https://your-app-name.onrender.com/api/seed/seed-original
 ```
 
 #### Reset Database (Development Only)

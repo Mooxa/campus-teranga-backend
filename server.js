@@ -28,6 +28,13 @@ app.use('/api/seed', require('./routes/seed'));
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_teranga', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 30000, // 30 seconds
+  socketTimeoutMS: 45000, // 45 seconds
+  bufferMaxEntries: 0, // Disable mongoose buffering
+  bufferCommands: false, // Disable mongoose buffering
+  maxPoolSize: 10, // Maintain up to 10 socket connections
+  serverSelectionRetryDelayMS: 5000, // Keep trying to send operations for 5 seconds
+  heartbeatFrequencyMS: 10000, // Send a ping every 10 seconds
 })
 .then(async () => {
   console.log('MongoDB connected successfully');
@@ -38,13 +45,22 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_te
   }
   // Auto-seed in production if SEED_ON_START is set
   if (process.env.NODE_ENV === 'production' && process.env.SEED_ON_START === 'true') {
-    console.log('🌱 Auto-seeding production database...');
+    console.log('🌱 Auto-seeding production database with robust method...');
     try {
-      const seedProductionData = require('./seed_production');
-      await seedProductionData();
+      const seedRobustData = require('./seed_robust');
+      await seedRobustData();
       console.log('✅ Production database seeded successfully');
     } catch (error) {
       console.error('❌ Error auto-seeding production database:', error);
+      // Fallback to original method
+      try {
+        console.log('🔄 Trying fallback seeding method...');
+        const seedProductionData = require('./seed_production');
+        await seedProductionData();
+        console.log('✅ Fallback seeding completed successfully');
+      } catch (fallbackError) {
+        console.error('❌ Fallback seeding also failed:', fallbackError);
+      }
     }
   }
 })
