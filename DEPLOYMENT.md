@@ -56,6 +56,8 @@ Set these environment variables in Render:
 | `MONGODB_URI` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/campus_teranga` |
 | `JWT_SECRET` | JWT signing secret | `your_strong_jwt_secret_here` |
 | `FRONTEND_URL` | Frontend URL for CORS | `https://your-frontend-url.com` |
+| `SEED_ON_START` | Auto-seed database on startup | `true` (optional) |
+| `ALLOW_DATA_RESET` | Allow database reset in production | `false` (optional) |
 
 ### 4. Domain and SSL
 
@@ -80,6 +82,39 @@ To run locally with production-like settings:
 3. Run `npm install`
 4. Run `npm start`
 
+## Database Seeding
+
+### Automatic Seeding
+Set `SEED_ON_START=true` to automatically seed the database when the server starts.
+
+### Manual Seeding
+Use the seeding endpoints to manage your database:
+
+#### Check Database Statistics
+```bash
+GET https://your-app-name.onrender.com/api/seed/stats
+```
+
+#### Seed Production Data
+```bash
+POST https://your-app-name.onrender.com/api/seed/seed
+```
+
+#### Reset Database (Development Only)
+```bash
+POST https://your-app-name.onrender.com/api/seed/reset
+```
+
+### Seeded Data Includes:
+- **Admin Users**: 2 admin accounts with login credentials
+- **Formations**: 4 universities (UCAD, UAHB, UPD, ESP)
+- **Services**: 8 services (transport, housing, procedures, banking)
+- **Events**: 4 sample events (welcome, cultural, career, tourism)
+
+### Admin Login Credentials:
+- **Admin**: Phone: `+221771234568`, Password: `admin123`
+- **Super Admin**: Phone: `+221771234569`, Password: `superadmin123`
+
 ## API Endpoints
 
 Once deployed, your API will be available at:
@@ -91,6 +126,7 @@ Once deployed, your API will be available at:
   - `/api/services/*` - Services management
   - `/api/events/*` - Events management
   - `/api/admin/*` - Admin endpoints
+  - `/api/seed/*` - Database seeding endpoints
 
 ## Troubleshooting
 

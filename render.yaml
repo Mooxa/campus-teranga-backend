@@ -11,6 +11,8 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: SEED_ON_START
+        value: "true"
     # Add your MongoDB Atlas connection string here
     # - key: MONGODB_URI
     #   value: mongodb+srv://username:password@cluster.mongodb.net/campus_teranga

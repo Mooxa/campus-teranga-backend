@@ -22,6 +22,7 @@ app.use('/api/formations', require('./routes/formations'));
 app.use('/api/services', require('./routes/services'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/seed', require('./routes/seed'));
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_teranga', {
@@ -34,6 +35,17 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_te
   if (process.env.NODE_ENV === 'development') {
     const seedData = require('./seed_data');
     await seedData();
+  }
+  // Auto-seed in production if SEED_ON_START is set
+  if (process.env.NODE_ENV === 'production' && process.env.SEED_ON_START === 'true') {
+    console.log('🌱 Auto-seeding production database...');
+    try {
+      const seedProductionData = require('./seed_production');
+      await seedProductionData();
+      console.log('✅ Production database seeded successfully');
+    } catch (error) {
+      console.error('❌ Error auto-seeding production database:', error);
+    }
   }
 })
 .catch(err => console.error('MongoDB connection error:', err));
