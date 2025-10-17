@@ -28,15 +28,8 @@ const retryOperation = async (operation, maxRetries = 3, delay = 2000) => {
 
 const connectToDatabase = async () => {
   const mongoOptions = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverSelectionTimeoutMS: 30000, // 30 seconds
     socketTimeoutMS: 45000, // 45 seconds
-    bufferMaxEntries: 0, // Disable mongoose buffering
-    bufferCommands: false, // Disable mongoose buffering
-    maxPoolSize: 10, // Maintain up to 10 socket connections
-    serverSelectionRetryDelayMS: 5000, // Keep trying to send operations for 5 seconds
-    heartbeatFrequencyMS: 10000, // Send a ping every 10 seconds
   };
 
   console.log('🔌 Connecting to MongoDB...');

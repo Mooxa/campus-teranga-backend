@@ -26,15 +26,8 @@ app.use('/api/seed', require('./routes/seed'));
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_teranga', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   serverSelectionTimeoutMS: 30000, // 30 seconds
   socketTimeoutMS: 45000, // 45 seconds
-  bufferMaxEntries: 0, // Disable mongoose buffering
-  bufferCommands: false, // Disable mongoose buffering
-  maxPoolSize: 10, // Maintain up to 10 socket connections
-  serverSelectionRetryDelayMS: 5000, // Keep trying to send operations for 5 seconds
-  heartbeatFrequencyMS: 10000, // Send a ping every 10 seconds
 })
 .then(async () => {
   console.log('MongoDB connected successfully');
