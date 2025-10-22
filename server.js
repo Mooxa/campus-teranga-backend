@@ -10,15 +10,41 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'https://campus-teranga-admin.vercel.app',
-    'https://campus-teranga-admin-git-main.vercel.app',
-    'https://campus-teranga-admin-git-develop.vercel.app'
-  ],
-  credentials: true
-}));
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      'http://localhost:3001', // Admin dashboard local development
+      'http://localhost:3002', // Alternative admin port
+      'https://campus-teranga-admin.vercel.app',
+      'https://campus-teranga-admin-git-main.vercel.app',
+      'https://campus-teranga-admin-git-develop.vercel.app',
+      'https://campus-teranga-admin-git-main-mooxa.vercel.app', // Full Vercel URL
+      'https://campus-teranga-admin-git-develop-mooxa.vercel.app' // Full Vercel URL
+    ];
+    
+    // Allow localhost for development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    console.log('CORS blocked origin:', origin);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
