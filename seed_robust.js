@@ -400,8 +400,8 @@ const createServices = async () => {
     },
     {
       name: 'Banque CBAO',
-      category: 'banking',
-      subcategory: 'account',
+      category: 'other',
+      subcategory: 'banking',
       description: 'Ouverture de compte bancaire pour étudiants étrangers.',
       price: {
         amount: 10000,
@@ -500,7 +500,7 @@ const createEvents = async () => {
         address: 'Avenue Cheikh Anta Diop',
         city: 'Dakar'
       },
-      category: 'career',
+      category: 'academic',
       image: '',
       organizer: {
         name: 'Campus Teranga',
@@ -528,7 +528,7 @@ const createEvents = async () => {
         address: 'Quai d\'embarquement',
         city: 'Dakar'
       },
-      category: 'tourism',
+      category: 'cultural',
       image: '',
       organizer: {
         name: 'Campus Teranga',
