@@ -9,7 +9,14 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key_here');
+    // Ensure JWT_SECRET is properly set
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('JWT_SECRET environment variable is not set');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
+    const decoded = jwt.verify(token, jwtSecret);
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
@@ -19,6 +26,13 @@ const auth = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.error('Auth error:', error.message);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token signature' });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token has expired' });
+    }
     res.status(401).json({ message: 'Token is not valid' });
   }
 };

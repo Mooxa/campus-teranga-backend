@@ -54,7 +54,7 @@ Set these environment variables in Render:
 | `NODE_ENV` | Environment mode | `production` |
 | `PORT` | Server port | `10000` (Render default) |
 | `MONGODB_URI` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/campus_teranga` |
-| `JWT_SECRET` | JWT signing secret | `your_strong_jwt_secret_here` |
+| `JWT_SECRET` | JWT signing secret | `d28d026672a428a56796df19238db40b9e6636e3124a19069bc82fd955db8c5a715a3b23ce0fb621c74347ed5109c544408c05bcc4fd399fb06b98ba24bce202` |
 | `FRONTEND_URL` | Frontend URL for CORS | `https://your-frontend-url.com` |
 | `SEED_ON_START` | Auto-seed database on startup | `true` (optional) |
 | `ALLOW_DATA_RESET` | Allow database reset in production | `false` (optional) |
@@ -141,6 +141,10 @@ Once deployed, your API will be available at:
 2. **Database Connection**: Verify MongoDB Atlas connection string and network access
 3. **CORS Issues**: Update `FRONTEND_URL` environment variable
 4. **JWT Errors**: Ensure `JWT_SECRET` is set and consistent
+5. **JWT Signature Errors**: 
+   - Ensure `JWT_SECRET` is set in Render environment variables
+   - Use the generated secret: `d28d026672a428a56796df19238db40b9e6636e3124a19069bc82fd955db8c5a715a3b23ce0fb621c74347ed5109c544408c05bcc4fd399fb06b98ba24bce202`
+   - Restart the application after setting the JWT_SECRET
 
 ### Logs
 
