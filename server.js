@@ -11,7 +11,12 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:3000',
+    'https://campus-teranga-admin.vercel.app',
+    'https://campus-teranga-admin-git-main.vercel.app',
+    'https://campus-teranga-admin-git-develop.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json());
