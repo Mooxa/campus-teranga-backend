@@ -1,12 +1,25 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+// Database connection check middleware
+const checkDatabaseConnection = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ 
+      success: false,
+      message: 'Database not connected. Please try again later.',
+      error: 'MongoNotConnectedError'
+    });
+  }
+  next();
+};
+
 // Register
-router.post('/register', async (req, res) => {
+router.post('/register', checkDatabaseConnection, async (req, res) => {
   try {
     const { fullName, phoneNumber, email, password } = req.body;
 
@@ -52,7 +65,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', checkDatabaseConnection, async (req, res) => {
   try {
     const { phoneNumber, password } = req.body;
 
@@ -94,7 +107,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Get current user
-router.get('/me', auth, async (req, res) => {
+router.get('/me', checkDatabaseConnection, auth, async (req, res) => {
   try {
     res.json({
       user: {
@@ -115,7 +128,7 @@ router.get('/me', auth, async (req, res) => {
 });
 
 // Update user profile
-router.put('/profile', auth, async (req, res) => {
+router.put('/profile', checkDatabaseConnection, auth, async (req, res) => {
   try {
     const { fullName, email, country, university } = req.body;
     

@@ -24,40 +24,60 @@ app.use('/api/events', require('./routes/events'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/seed', require('./routes/seed'));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_teranga', {
-  serverSelectionTimeoutMS: 30000, // 30 seconds
-  socketTimeoutMS: 45000, // 45 seconds
-})
-.then(async () => {
-  console.log('MongoDB connected successfully');
-  // Seed sample data in development
-  if (process.env.NODE_ENV === 'development') {
-    const seedData = require('./seed_data');
-    await seedData();
-  }
-  // Auto-seed in production if SEED_ON_START is set
-  if (process.env.NODE_ENV === 'production' && process.env.SEED_ON_START === 'true') {
-    console.log('🌱 Auto-seeding production database with robust method...');
-    try {
-      const seedRobustData = require('./seed_robust');
-      await seedRobustData();
-      console.log('✅ Production database seeded successfully');
-    } catch (error) {
-      console.error('❌ Error auto-seeding production database:', error);
-      // Fallback to original method
+// Database connection and server startup
+const startServer = async () => {
+  try {
+    console.log('🔌 Connecting to MongoDB...');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_teranga', {
+      serverSelectionTimeoutMS: 30000, // 30 seconds
+      socketTimeoutMS: 45000, // 45 seconds
+    });
+    
+    console.log('✅ MongoDB connected successfully');
+    
+    // Seed sample data in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🌱 Seeding development database...');
+      const seedData = require('./seed_data');
+      await seedData();
+    }
+    
+    // Auto-seed in production if SEED_ON_START is set
+    if (process.env.NODE_ENV === 'production' && process.env.SEED_ON_START === 'true') {
+      console.log('🌱 Auto-seeding production database with robust method...');
       try {
-        console.log('🔄 Trying fallback seeding method...');
-        const seedProductionData = require('./seed_production');
-        await seedProductionData();
-        console.log('✅ Fallback seeding completed successfully');
-      } catch (fallbackError) {
-        console.error('❌ Fallback seeding also failed:', fallbackError);
+        const seedRobustData = require('./seed_robust');
+        await seedRobustData();
+        console.log('✅ Production database seeded successfully');
+      } catch (error) {
+        console.error('❌ Error auto-seeding production database:', error);
+        // Fallback to original method
+        try {
+          console.log('🔄 Trying fallback seeding method...');
+          const seedProductionData = require('./seed_production');
+          await seedProductionData();
+          console.log('✅ Fallback seeding completed successfully');
+        } catch (fallbackError) {
+          console.error('❌ Fallback seeding also failed:', fallbackError);
+        }
       }
     }
+    
+    // Start the server only after database connection is established
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
   }
-})
-.catch(err => console.error('MongoDB connection error:', err));
+};
+
+// Start the server
+startServer();
 
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
@@ -81,8 +101,4 @@ app.get('/', (req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!' });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
 });
