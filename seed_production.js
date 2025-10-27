@@ -10,16 +10,22 @@ const Event = require('./models/Event');
 const User = require('./models/User');
 
 const seedProductionData = async () => {
+  let shouldDisconnect = false;
+  
   try {
     console.log('🌱 Starting production data seeding...');
     
-    // Connect to MongoDB with better configuration
-    await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 30000, // 30 seconds
-      socketTimeoutMS: 45000, // 45 seconds
-    });
-    
-    console.log('✅ Connected to MongoDB');
+    // Only connect if not already connected
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+      });
+      console.log('✅ Connected to MongoDB');
+      shouldDisconnect = true;
+    } else {
+      console.log('✅ Using existing MongoDB connection');
+    }
 
     // Check if data already exists
     const existingFormations = await Formation.countDocuments();
@@ -533,8 +539,13 @@ const seedProductionData = async () => {
     console.error('❌ Error seeding production data:', error);
     throw error;
   } finally {
-    await mongoose.disconnect();
-    console.log('🔌 Disconnected from MongoDB');
+    // Only disconnect if we connected in this function
+    if (shouldDisconnect) {
+      await mongoose.disconnect();
+      console.log('🔌 Disconnected from MongoDB');
+    } else {
+      console.log('✅ Keeping MongoDB connection alive');
+    }
   }
 };
 

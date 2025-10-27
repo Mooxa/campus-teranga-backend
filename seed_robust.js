@@ -555,11 +555,18 @@ const createEvents = async () => {
 };
 
 const seedRobustData = async () => {
+  let shouldDisconnect = false;
+  
   try {
     console.log('🌱 Starting robust production data seeding...');
     
-    // Connect to database
-    await connectToDatabase();
+    // Only connect if not already connected
+    if (mongoose.connection.readyState === 0) {
+      await connectToDatabase();
+      shouldDisconnect = true;
+    } else {
+      console.log('✅ Using existing MongoDB connection');
+    }
     
     // Check existing data
     const existingData = await checkExistingData();
@@ -594,8 +601,13 @@ const seedRobustData = async () => {
     console.error('❌ Error in robust seeding:', error);
     throw error;
   } finally {
-    await mongoose.disconnect();
-    console.log('🔌 Disconnected from MongoDB');
+    // Only disconnect if we connected in this function
+    if (shouldDisconnect) {
+      await mongoose.disconnect();
+      console.log('🔌 Disconnected from MongoDB');
+    } else {
+      console.log('✅ Keeping MongoDB connection alive');
+    }
   }
 };
 
