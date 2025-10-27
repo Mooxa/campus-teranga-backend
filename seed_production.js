@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: './config.env' });
 
 const Formation = require('./models/Formation');
 const Service = require('./models/Service');
@@ -45,7 +45,7 @@ const seedProductionData = async () => {
         fullName: 'Admin Campus Teranga',
         phoneNumber: '+221771234568',
         email: 'admin@campus-teranga.com',
-        password: 'admin123',
+        password: 'Admin123',
         country: 'Sénégal',
         university: 'Campus Teranga',
         role: 'admin'
@@ -54,7 +54,7 @@ const seedProductionData = async () => {
         fullName: 'Super Admin',
         phoneNumber: '+221771234569',
         email: 'superadmin@campus-teranga.com',
-        password: 'superadmin123',
+        password: 'SuperAdmin123',
         country: 'Sénégal',
         university: 'Campus Teranga',
         role: 'super_admin'

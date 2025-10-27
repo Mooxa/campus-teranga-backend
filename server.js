@@ -4,7 +4,15 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: './config.env' });
+
+// Debug: Log environment variables
+console.log('Environment variables loaded:');
+console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'Set' : 'Not set');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT);
+console.log('API_URL:', process.env.API_URL || 'Not set');
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL || 'Not set');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +27,8 @@ const corsOptions = {
       process.env.FRONTEND_URL || 'http://localhost:3000',
       'http://localhost:3001', // Admin dashboard local development
       'http://localhost:3002', // Alternative admin port
+      'http://192.168.1.2:3000', // iOS simulator access
+      'http://192.168.1.2:3001', // iOS simulator admin access
       'https://campus-teranga-admin.vercel.app',
       'https://campus-teranga-admin-git-main.vercel.app',
       'https://campus-teranga-admin-git-develop.vercel.app',
@@ -26,8 +36,8 @@ const corsOptions = {
       'https://campus-teranga-admin-git-develop-mooxa.vercel.app' // Full Vercel URL
     ];
     
-    // Allow localhost for development
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+    // Allow localhost and local network for development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('192.168.1.2')) {
       return callback(null, true);
     }
     
@@ -59,9 +69,25 @@ app.use('/api/seed', require('./routes/seed'));
 const startServer = async () => {
   try {
     console.log('🔌 Connecting to MongoDB...');
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_teranga', {
+    
+    // Ensure MongoDB URI is defined
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_teranga';
+    const apiUrl = process.env.API_URL || `http://localhost:${PORT}`;
+    
+    console.log('MongoDB URI:', mongoUri);
+    console.log('API URL:', apiUrl);
+    
+    if (!mongoUri) {
+      throw new Error('MongoDB URI is not defined. Please check your environment configuration.');
+    }
+    
+    await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 30000, // 30 seconds
       socketTimeoutMS: 45000, // 45 seconds
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      bufferCommands: false, // Disable mongoose buffering
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
     
     console.log('✅ MongoDB connected successfully');
@@ -95,10 +121,12 @@ const startServer = async () => {
     }
     
     // Start the server only after database connection is established
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔗 API URL: ${apiUrl}`);
+      console.log(`📊 Health check: ${apiUrl}/health`);
+      console.log(`📱 iOS Simulator access: http://192.168.1.2:${PORT}/api`);
     });
     
   } catch (error) {
