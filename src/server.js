@@ -19,6 +19,7 @@ const userRoutes = require('./routes/userRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const formationRoutes = require('./routes/formationRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
+const communityRoutes = require('./routes/communityRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const seedRoutes = require('./routes/seed');
 
@@ -97,6 +98,7 @@ class Server {
     this.app.use('/api/events', eventRoutes);
     this.app.use('/api/formations', formationRoutes);
     this.app.use('/api/services', serviceRoutes);
+    this.app.use('/api/communities', communityRoutes);
     this.app.use('/api/admin', adminRoutes);
     this.app.use('/api/seed', seedRoutes);
 
