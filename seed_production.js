@@ -8,6 +8,7 @@ const Formation = require('./models/Formation');
 const Service = require('./models/Service');
 const Event = require('./models/Event');
 const User = require('./models/User');
+const Community = require('./src/models/Community');
 
 const seedProductionData = async () => {
   let shouldDisconnect = false;
@@ -32,13 +33,15 @@ const seedProductionData = async () => {
     const existingServices = await Service.countDocuments();
     const existingEvents = await Event.countDocuments();
     const existingUsers = await User.countDocuments();
+    const existingCommunities = await Community.countDocuments();
 
-    if (existingFormations > 0 || existingServices > 0 || existingEvents > 0 || existingUsers > 0) {
+    if (existingFormations > 0 || existingServices > 0 || existingEvents > 0 || existingUsers > 0 || existingCommunities > 0) {
       console.log('⚠️  Data already exists in database:');
       console.log(`   - Formations: ${existingFormations}`);
       console.log(`   - Services: ${existingServices}`);
       console.log(`   - Events: ${existingEvents}`);
       console.log(`   - Users: ${existingUsers}`);
+      console.log(`   - Communities: ${existingCommunities}`);
       console.log('🔄 Skipping seeding to avoid duplicates...');
       return;
     }
@@ -528,12 +531,132 @@ const seedProductionData = async () => {
     await Event.insertMany(events);
     console.log(`✅ Created ${events.length} events`);
 
+    // Seed Communities
+    console.log('👥 Creating communities...');
+    
+    // Get admin users for community creators
+    const adminUser = await User.findOne({ role: 'admin' });
+    const superAdminUser = await User.findOne({ role: 'super_admin' });
+    
+    if (!adminUser || !superAdminUser) {
+      console.log('⚠️  Admin users not found, skipping community creation');
+    } else {
+      const communities = [
+        {
+          name: 'Étudiants Internationaux Dakar',
+          description: 'Communauté pour les étudiants internationaux à Dakar. Partages, conseils, et entraide pour faciliter votre intégration.',
+          image: '',
+          category: 'social',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Développeurs Tech Sénégal',
+          description: 'Communauté de développeurs et passionnés de technologie au Sénégal. Échangez sur les dernières technologies, projets et opportunités.',
+          image: '',
+          category: 'professional',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Étudiants en Médecine',
+          description: 'Communauté dédiée aux étudiants en médecine. Partages d\'expériences, conseils sur les stages et révisions.',
+          image: '',
+          category: 'academic',
+          creator: superAdminUser._id,
+          members: [
+            {
+              user: superAdminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Sorties et Loisirs Dakar',
+          description: 'Découvrez les meilleures activités, restaurants, et lieux à visiter à Dakar avec d\'autres étudiants.',
+          image: '',
+          category: 'cultural',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Jobbing Étudiants Dakar',
+          description: 'Opportunités de jobs étudiants à Dakar. Partagez vos expériences et trouvez des opportunités.',
+          image: '',
+          category: 'professional',
+          creator: superAdminUser._id,
+          members: [
+            {
+              user: superAdminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Footing Campus UCAD',
+          description: 'Groupe de footing pour les étudiants de l\'UCAD. Pratiquez une activité sportive régulière et rencontrez d\'autres sportifs.',
+          image: '',
+          category: 'sports',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        }
+      ];
+
+      await Community.insertMany(communities);
+      console.log(`✅ Created ${communities.length} communities`);
+    }
+
     console.log('🎉 Production data seeding completed successfully!');
     console.log('📊 Summary:');
     console.log(`   - Admin users: 2`);
     console.log(`   - Formations: ${formations.length}`);
     console.log(`   - Services: ${services.length}`);
     console.log(`   - Events: ${events.length}`);
+    console.log(`   - Communities: 6`);
 
   } catch (error) {
     console.error('❌ Error seeding production data:', error);
