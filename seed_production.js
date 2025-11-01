@@ -10,11 +10,23 @@ const Event = require('./models/Event');
 const User = require('./models/User');
 const Community = require('./src/models/Community');
 
-const seedProductionData = async () => {
+const seedProductionData = async (options = {}) => {
   let shouldDisconnect = false;
+  
+  // Configuration from environment variables or options
+  const CLEAR_ALL = options.clearAll || process.env.CLEAR_ALL === 'true';
+  const CLEAR_COLLECTIONS = options.clearCollections || 
+    (process.env.CLEAR_COLLECTIONS ? process.env.CLEAR_COLLECTIONS.split(',').map(c => c.trim()) : []);
+  const FORCE_SEED = options.force || process.env.FORCE_SEED === 'true';
+  const SEED_EMPTY_ONLY = options.seedEmptyOnly || process.env.SEED_EMPTY_ONLY === 'true';
   
   try {
     console.log('🌱 Starting production data seeding...');
+    console.log('⚙️  Configuration:');
+    console.log(`   - CLEAR_ALL: ${CLEAR_ALL}`);
+    console.log(`   - CLEAR_COLLECTIONS: ${CLEAR_COLLECTIONS.length > 0 ? CLEAR_COLLECTIONS.join(', ') : 'none'}`);
+    console.log(`   - FORCE_SEED: ${FORCE_SEED}`);
+    console.log(`   - SEED_EMPTY_ONLY: ${SEED_EMPTY_ONLY}`);
     
     // Only connect if not already connected
     if (mongoose.connection.readyState === 0) {
@@ -28,26 +40,69 @@ const seedProductionData = async () => {
       console.log('✅ Using existing MongoDB connection');
     }
 
-    // Check if data already exists
+    // Check existing data counts
     const existingFormations = await Formation.countDocuments();
     const existingServices = await Service.countDocuments();
     const existingEvents = await Event.countDocuments();
     const existingUsers = await User.countDocuments();
     const existingCommunities = await Community.countDocuments();
 
-    if (existingFormations > 0 || existingServices > 0 || existingEvents > 0 || existingUsers > 0 || existingCommunities > 0) {
-      console.log('⚠️  Data already exists in database:');
-      console.log(`   - Formations: ${existingFormations}`);
-      console.log(`   - Services: ${existingServices}`);
-      console.log(`   - Events: ${existingEvents}`);
-      console.log(`   - Users: ${existingUsers}`);
-      console.log(`   - Communities: ${existingCommunities}`);
-      console.log('🔄 Skipping seeding to avoid duplicates...');
-      return;
+    console.log('\n📊 Current database state:');
+    console.log(`   - Formations: ${existingFormations}`);
+    console.log(`   - Services: ${existingServices}`);
+    console.log(`   - Events: ${existingEvents}`);
+    console.log(`   - Users: ${existingUsers}`);
+    console.log(`   - Communities: ${existingCommunities}`);
+
+    // Clear collections if requested
+    if (CLEAR_ALL) {
+      console.log('\n🗑️  Clearing ALL collections...');
+      await Formation.deleteMany({});
+      await Service.deleteMany({});
+      await Event.deleteMany({});
+      await Community.deleteMany({});
+      // Don't delete all users, only non-admin users if specified
+      if (options.clearUsers) {
+        await User.deleteMany({ role: { $ne: 'admin', $ne: 'super_admin' } });
+      }
+      console.log('✅ All collections cleared');
+    } else if (CLEAR_COLLECTIONS.length > 0) {
+      console.log(`\n🗑️  Clearing specified collections: ${CLEAR_COLLECTIONS.join(', ')}...`);
+      if (CLEAR_COLLECTIONS.includes('formations') || CLEAR_COLLECTIONS.includes('Formation')) {
+        await Formation.deleteMany({});
+        console.log('✅ Formations cleared');
+      }
+      if (CLEAR_COLLECTIONS.includes('services') || CLEAR_COLLECTIONS.includes('Service')) {
+        await Service.deleteMany({});
+        console.log('✅ Services cleared');
+      }
+      if (CLEAR_COLLECTIONS.includes('events') || CLEAR_COLLECTIONS.includes('Event')) {
+        await Event.deleteMany({});
+        console.log('✅ Events cleared');
+      }
+      if (CLEAR_COLLECTIONS.includes('communities') || CLEAR_COLLECTIONS.includes('Community')) {
+        await Community.deleteMany({});
+        console.log('✅ Communities cleared');
+      }
+      if (CLEAR_COLLECTIONS.includes('users') || CLEAR_COLLECTIONS.includes('User')) {
+        await User.deleteMany({ role: { $ne: 'admin', $ne: 'super_admin' } });
+        console.log('✅ Users cleared (except admins)');
+      }
     }
 
-    // Seed Admin Users
-    console.log('👤 Creating admin users...');
+    // Check if we should skip seeding (only if SEED_EMPTY_ONLY is true and data exists)
+    if (SEED_EMPTY_ONLY && !CLEAR_ALL && CLEAR_COLLECTIONS.length === 0) {
+      const hasAnyData = existingFormations > 0 || existingServices > 0 || 
+                        existingEvents > 0 || existingUsers > 0 || existingCommunities > 0;
+      if (hasAnyData) {
+        console.log('\n⚠️  SEED_EMPTY_ONLY is enabled and data exists.');
+        console.log('🔄 Skipping seeding. Use CLEAR_ALL=true or CLEAR_COLLECTIONS to clear specific collections.');
+        return;
+      }
+    }
+
+    // Seed Admin Users (always check/create if not exists)
+    console.log('\n👤 Creating admin users...');
     
     const adminUsers = [
       {
@@ -82,8 +137,15 @@ const seedProductionData = async () => {
     }
 
     // Seed Formations
-    console.log('🏫 Creating formations...');
-    const formations = [
+    const currentFormationsCount = await Formation.countDocuments();
+    if (currentFormationsCount === 0 || FORCE_SEED) {
+      console.log('\n🏫 Creating formations...');
+    } else {
+      console.log(`\n⏭️  Skipping formations (${currentFormationsCount} already exist). Use --force to override.`);
+    }
+    
+    if (currentFormationsCount === 0 || FORCE_SEED) {
+      const formations = [
       {
         name: 'Université Cheikh Anta Diop',
         shortName: 'UCAD',
@@ -208,12 +270,20 @@ const seedProductionData = async () => {
       }
     ];
 
-    await Formation.insertMany(formations);
-    console.log(`✅ Created ${formations.length} formations`);
+      await Formation.insertMany(formations);
+      console.log(`✅ Created ${formations.length} formations`);
+    }
 
     // Seed Services
-    console.log('🚌 Creating services...');
-    const services = [
+    const currentServicesCount = await Service.countDocuments();
+    if (currentServicesCount === 0 || FORCE_SEED) {
+      console.log('\n🚌 Creating services...');
+    } else {
+      console.log(`\n⏭️  Skipping services (${currentServicesCount} already exist). Use --force to override.`);
+    }
+    
+    if (currentServicesCount === 0 || FORCE_SEED) {
+      const services = [
       {
         name: 'Bus Dakar Dem Dikk',
         category: 'transport',
@@ -406,14 +476,22 @@ const seedProductionData = async () => {
         features: ['Compte gratuit étudiants', 'Carte bancaire', 'Application mobile'],
         rating: 4.1
       }
-    ];
+      ];
 
-    await Service.insertMany(services);
-    console.log(`✅ Created ${services.length} services`);
+      await Service.insertMany(services);
+      console.log(`✅ Created ${services.length} services`);
+    }
 
     // Seed Events
-    console.log('🎉 Creating events...');
-    const events = [
+    const currentEventsCount = await Event.countDocuments();
+    if (currentEventsCount === 0 || FORCE_SEED) {
+      console.log('\n🎉 Creating events...');
+    } else {
+      console.log(`\n⏭️  Skipping events (${currentEventsCount} already exist). Use --force to override.`);
+    }
+    
+    if (currentEventsCount === 0 || FORCE_SEED) {
+      const events = [
       {
         title: 'Soirée d\'accueil étudiants internationaux',
         description: 'Soirée de bienvenue pour tous les nouveaux étudiants étrangers. Découvrez la culture sénégalaise et rencontrez d\'autres étudiants internationaux.',
@@ -528,22 +606,29 @@ const seedProductionData = async () => {
       }
     ];
 
-    await Event.insertMany(events);
-    console.log(`✅ Created ${events.length} events`);
+      await Event.insertMany(events);
+      console.log(`✅ Created ${events.length} events`);
+    }
 
     // Seed Communities
-    console.log('👥 Creating communities...');
-    
-    // Get admin users for community creators
-    const adminUser = await User.findOne({ role: 'admin' });
-    const superAdminUser = await User.findOne({ role: 'super_admin' });
+    const currentCommunitiesCount = await Community.countDocuments();
+    if (currentCommunitiesCount === 0 || FORCE_SEED) {
+      console.log('\n👥 Creating communities...');
+    } else {
+      console.log(`\n⏭️  Skipping communities (${currentCommunitiesCount} already exist). Use --force to override.`);
+    }
     
     let communitiesCreated = 0;
-    if (!adminUser || !superAdminUser) {
-      console.log('⚠️  Admin users not found, skipping community creation');
-    } else {
-      const communities = [
-        // Social Communities
+    if (currentCommunitiesCount === 0 || FORCE_SEED) {
+      // Get admin users for community creators
+      const adminUser = await User.findOne({ role: 'admin' });
+      const superAdminUser = await User.findOne({ role: 'super_admin' });
+      
+      if (!adminUser || !superAdminUser) {
+        console.log('⚠️  Admin users not found, skipping community creation');
+      } else {
+        const communities = [
+          // Social Communities
         {
           name: 'Étudiants Internationaux Dakar',
           description: 'Communauté pour les étudiants internationaux à Dakar. Partages, conseils, et entraide pour faciliter votre intégration au Sénégal. Posez vos questions sur la vie étudiante, les formalités administratives, et découvrez la culture sénégalaise.',
@@ -947,18 +1032,29 @@ const seedProductionData = async () => {
         }
       ];
 
-      await Community.insertMany(communities);
-      communitiesCreated = communities.length;
-      console.log(`✅ Created ${communities.length} communities`);
+        await Community.insertMany(communities);
+        communitiesCreated = communities.length;
+        console.log(`✅ Created ${communities.length} communities`);
+      }
+    } else {
+      console.log(`⏭️  Communities already exist, skipping...`);
     }
 
-    console.log('🎉 Production data seeding completed successfully!');
-    console.log('📊 Summary:');
-    console.log(`   - Admin users: 2`);
-    console.log(`   - Formations: ${formations.length}`);
-    console.log(`   - Services: ${services.length}`);
-    console.log(`   - Events: ${events.length}`);
-    console.log(`   - Communities: ${communitiesCreated}`);
+    // Final summary
+    const finalFormationsCount = await Formation.countDocuments();
+    const finalServicesCount = await Service.countDocuments();
+    const finalEventsCount = await Event.countDocuments();
+    const finalUsersCount = await User.countDocuments();
+    const finalCommunitiesCount = await Community.countDocuments();
+
+    console.log('\n🎉 Production data seeding completed successfully!');
+    console.log('\n📊 Final Database Summary:');
+    console.log(`   - Admin users: 2 (checked/created)`);
+    console.log(`   - Formations: ${finalFormationsCount}`);
+    console.log(`   - Services: ${finalServicesCount}`);
+    console.log(`   - Events: ${finalEventsCount}`);
+    console.log(`   - Communities: ${finalCommunitiesCount}`);
+    console.log(`   - Total Users: ${finalUsersCount}`);
 
   } catch (error) {
     console.error('❌ Error seeding production data:', error);
@@ -976,13 +1072,67 @@ const seedProductionData = async () => {
 
 // Run if called directly
 if (require.main === module) {
-  seedProductionData()
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  const options = {
+    clearAll: args.includes('--clear-all') || args.includes('-c'),
+    force: args.includes('--force') || args.includes('-f'),
+    seedEmptyOnly: args.includes('--empty-only') || args.includes('-e'),
+    clearUsers: args.includes('--clear-users'),
+  };
+
+  // Parse CLEAR_COLLECTIONS from args
+  const clearCollectionsIndex = args.indexOf('--clear-collections');
+  if (clearCollectionsIndex !== -1 && args[clearCollectionsIndex + 1]) {
+    options.clearCollections = args[clearCollectionsIndex + 1].split(',').map(c => c.trim());
+  }
+
+  // Help message
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`
+🌱 Production Data Seeding Script
+
+Usage:
+  node seed_production.js [options]
+
+Options:
+  --clear-all, -c          Clear all collections before seeding
+  --clear-collections <list>  Clear specific collections (comma-separated)
+                              Available: formations,services,events,communities,users
+  --clear-users            Clear non-admin users when using --clear-all
+  --force, -f              Force seed even if data exists (overrides SEED_EMPTY_ONLY)
+  --empty-only, -e         Only seed if collections are empty
+  --help, -h               Show this help message
+
+Environment Variables:
+  CLEAR_ALL=true                    Clear all collections
+  CLEAR_COLLECTIONS=formations,events  Clear specific collections
+  FORCE_SEED=true                   Force seed even if data exists
+  SEED_EMPTY_ONLY=true              Only seed empty collections
+
+Examples:
+  # Clear all and seed fresh data
+  node seed_production.js --clear-all
+
+  # Clear only formations and communities, then seed
+  node seed_production.js --clear-collections formations,communities
+
+  # Seed only if collections are empty
+  node seed_production.js --empty-only
+
+  # Force seed regardless of existing data
+  node seed_production.js --force
+`);
+    process.exit(0);
+  }
+
+  seedProductionData(options)
     .then(() => {
-      console.log('✅ Seeding completed');
+      console.log('\n✅ Seeding completed successfully');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Seeding failed:', error);
+      console.error('\n❌ Seeding failed:', error);
       process.exit(1);
     });
 }
