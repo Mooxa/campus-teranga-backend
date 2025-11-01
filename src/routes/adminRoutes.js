@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Formation = require('../models/Formation');
 const Service = require('../models/Service');
 const Event = require('../models/Event');
+const Community = require('../models/Community');
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.get('/stats', async (req, res) => {
     const totalEvents = await Event.countDocuments();
     const totalFormations = await Formation.countDocuments();
     const totalServices = await Service.countDocuments();
+    const totalCommunities = await Community.countDocuments();
     
     // Get recent users (last 5)
     const recentUsers = await User.find()
@@ -34,6 +36,7 @@ router.get('/stats', async (req, res) => {
         totalEvents,
         totalFormations,
         totalServices,
+        totalCommunities,
         recentUsers
       }
     });
@@ -650,6 +653,145 @@ router.delete('/services/:id', async (req, res) => {
     res.status(500).json({ 
       success: false,
       message: 'Error deleting service',
+      error: error.message 
+    });
+  }
+});
+
+// Community Management Routes
+router.get('/communities', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search, category, isActive } = req.query;
+    const query = {};
+    
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (category) {
+      query.category = category;
+    }
+    
+    if (isActive !== undefined) {
+      query.isActive = isActive === 'true';
+    }
+    
+    const communities = await Community.find(query)
+      .populate('creator', 'fullName email phoneNumber')
+      .populate('members.user', 'fullName email')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .lean();
+    
+    const total = await Community.countDocuments(query);
+    
+    res.json({
+      success: true,
+      data: {
+        communities,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(total / limit)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get communities error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching communities',
+      error: error.message 
+    });
+  }
+});
+
+router.get('/communities/:id', async (req, res) => {
+  try {
+    const community = await Community.findById(req.params.id)
+      .populate('creator', 'fullName email phoneNumber')
+      .populate('members.user', 'fullName email phoneNumber')
+      .populate('posts.author', 'fullName email')
+      .lean();
+    
+    if (!community) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Community not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: community
+    });
+  } catch (error) {
+    console.error('Get community error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching community',
+      error: error.message 
+    });
+  }
+});
+
+router.put('/communities/:id', async (req, res) => {
+  try {
+    const { name, description, image, category, isPublic, isActive } = req.body;
+    const community = await Community.findByIdAndUpdate(
+      req.params.id,
+      { name, description, image, category, isPublic, isActive },
+      { new: true, runValidators: true }
+    )
+      .populate('creator', 'fullName email')
+      .populate('members.user', 'fullName email')
+      .lean();
+    
+    if (!community) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Community not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: community
+    });
+  } catch (error) {
+    console.error('Update community error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error updating community',
+      error: error.message 
+    });
+  }
+});
+
+router.delete('/communities/:id', async (req, res) => {
+  try {
+    const community = await Community.findByIdAndDelete(req.params.id);
+    if (!community) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Community not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Community deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Delete community error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error deleting community',
       error: error.message 
     });
   }

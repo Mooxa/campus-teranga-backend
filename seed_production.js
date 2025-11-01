@@ -538,13 +538,15 @@ const seedProductionData = async () => {
     const adminUser = await User.findOne({ role: 'admin' });
     const superAdminUser = await User.findOne({ role: 'super_admin' });
     
+    let communitiesCreated = 0;
     if (!adminUser || !superAdminUser) {
       console.log('⚠️  Admin users not found, skipping community creation');
     } else {
       const communities = [
+        // Social Communities
         {
           name: 'Étudiants Internationaux Dakar',
-          description: 'Communauté pour les étudiants internationaux à Dakar. Partages, conseils, et entraide pour faciliter votre intégration.',
+          description: 'Communauté pour les étudiants internationaux à Dakar. Partages, conseils, et entraide pour faciliter votre intégration au Sénégal. Posez vos questions sur la vie étudiante, les formalités administratives, et découvrez la culture sénégalaise.',
           image: '',
           category: 'social',
           creator: adminUser._id,
@@ -560,10 +562,10 @@ const seedProductionData = async () => {
           isActive: true
         },
         {
-          name: 'Développeurs Tech Sénégal',
-          description: 'Communauté de développeurs et passionnés de technologie au Sénégal. Échangez sur les dernières technologies, projets et opportunités.',
+          name: 'Étudiants UCAD - Université Cheikh Anta Diop',
+          description: 'Communauté officielle des étudiants de l\'UCAD. Échanges académiques, partage de ressources, annonces importantes et entraide entre étudiants de toutes les facultés.',
           image: '',
-          category: 'professional',
+          category: 'social',
           creator: adminUser._id,
           members: [
             {
@@ -577,8 +579,27 @@ const seedProductionData = async () => {
           isActive: true
         },
         {
+          name: 'Étudiants en Colocation Dakar',
+          description: 'Trouvez un colocataire ou partagez votre appartement. Conseils sur les quartiers, budgets, et bonnes pratiques pour la colocation étudiante à Dakar.',
+          image: '',
+          category: 'social',
+          creator: superAdminUser._id,
+          members: [
+            {
+              user: superAdminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        
+        // Academic Communities
+        {
           name: 'Étudiants en Médecine',
-          description: 'Communauté dédiée aux étudiants en médecine. Partages d\'expériences, conseils sur les stages et révisions.',
+          description: 'Communauté dédiée aux étudiants en médecine. Partages d\'expériences, conseils sur les stages, préparations aux examens, et soutien entre pairs dans cette filière exigeante.',
           image: '',
           category: 'academic',
           creator: superAdminUser._id,
@@ -594,10 +615,80 @@ const seedProductionData = async () => {
           isActive: true
         },
         {
-          name: 'Sorties et Loisirs Dakar',
-          description: 'Découvrez les meilleures activités, restaurants, et lieux à visiter à Dakar avec d\'autres étudiants.',
+          name: 'Étudiants en Informatique et Tech',
+          description: 'Communauté pour les étudiants en informatique, génie logiciel, et technologies. Partagez vos projets, demandez de l\'aide sur vos cours, et découvrez les dernières innovations.',
           image: '',
-          category: 'cultural',
+          category: 'academic',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Étudiants en Économie et Gestion',
+          description: 'Échangez sur vos cours, partagez vos notes, et discutez des opportunités dans le domaine de l\'économie et de la gestion au Sénégal et à l\'international.',
+          image: '',
+          category: 'academic',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Étudiants en Droit',
+          description: 'Communauté pour les futurs juristes. Discussions sur les cours, stages, préparations aux concours, et échanges sur le système juridique sénégalais.',
+          image: '',
+          category: 'academic',
+          creator: superAdminUser._id,
+          members: [
+            {
+              user: superAdminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Étudiants en Langues et Littérature',
+          description: 'Pour les passionnés de langues, littérature française, anglaise, et wolof. Échanges culturels, clubs de lecture, et discussions sur la littérature africaine.',
+          image: '',
+          category: 'academic',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        
+        // Professional Communities
+        {
+          name: 'Développeurs Tech Sénégal',
+          description: 'Communauté de développeurs et passionnés de technologie au Sénégal. Échangez sur les dernières technologies, projets open-source, hackathons, et opportunités de carrière dans le tech.',
+          image: '',
+          category: 'professional',
           creator: adminUser._id,
           members: [
             {
@@ -612,7 +703,7 @@ const seedProductionData = async () => {
         },
         {
           name: 'Jobbing Étudiants Dakar',
-          description: 'Opportunités de jobs étudiants à Dakar. Partagez vos expériences et trouvez des opportunités.',
+          description: 'Opportunités de jobs étudiants à Dakar. Partagez vos expériences, trouvez des opportunités de babysitting, tutorat, vente, et autres jobs étudiants compatibles avec vos études.',
           image: '',
           category: 'professional',
           creator: superAdminUser._id,
@@ -628,10 +719,220 @@ const seedProductionData = async () => {
           isActive: true
         },
         {
+          name: 'Stages et Alternance Étudiants',
+          description: 'Trouvez des stages et opportunités d\'alternance à Dakar. Conseils pour vos candidatures, partage d\'offres, et retours d\'expérience sur les entreprises locales.',
+          image: '',
+          category: 'professional',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Entrepreneurs Étudiants Sénégal',
+          description: 'Communauté pour les étudiants entrepreneurs et ceux qui souhaitent lancer leur startup. Partagez vos idées, trouvez des cofondateurs, et bénéficiez de conseils d\'experts.',
+          image: '',
+          category: 'professional',
+          creator: superAdminUser._id,
+          members: [
+            {
+              user: superAdminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        
+        // Cultural Communities
+        {
+          name: 'Sorties et Loisirs Dakar',
+          description: 'Découvrez les meilleures activités, restaurants, cinémas, concerts, et lieux à visiter à Dakar avec d\'autres étudiants. Organisez des sorties de groupe et découvrez la vie culturelle dakaroise.',
+          image: '',
+          category: 'cultural',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Musique et Arts Dakar',
+          description: 'Pour les amateurs de musique, danse, peinture, et arts en général. Organisez des jam sessions, expositions étudiantes, et partagez votre passion artistique.',
+          image: '',
+          category: 'cultural',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Cinéma Étudiants Dakar',
+          description: 'Projections de films, discussions cinématographiques, et sorties aux festivals de cinéma à Dakar. Découvrez le cinéma africain et international.',
+          image: '',
+          category: 'cultural',
+          creator: superAdminUser._id,
+          members: [
+            {
+              user: superAdminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Cuisine Sénégalaise - Recettes et Traditions',
+          description: 'Apprenez et partagez les recettes sénégalaises traditionnelles. Organisez des ateliers cuisine, découvrez les spécialités régionales, et échangez des astuces culinaires.',
+          image: '',
+          category: 'cultural',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        
+        // Sports Communities
+        {
           name: 'Footing Campus UCAD',
-          description: 'Groupe de footing pour les étudiants de l\'UCAD. Pratiquez une activité sportive régulière et rencontrez d\'autres sportifs.',
+          description: 'Groupe de footing pour les étudiants de l\'UCAD. Pratiquez une activité sportive régulière, rencontrez d\'autres sportifs, et participez à des courses organisées dans Dakar.',
           image: '',
           category: 'sports',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Basket Étudiants Dakar',
+          description: 'Organisez des matchs de basketball entre étudiants. Entraînements réguliers, tournois, et équipes mixtes pour tous les niveaux.',
+          image: '',
+          category: 'sports',
+          creator: superAdminUser._id,
+          members: [
+            {
+              user: superAdminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Football Étudiants - 5 vs 5',
+          description: 'Matchs de foot à 5 entre étudiants. Organisez des tournois, trouvez des joueurs, et profitez de terrains accessibles à Dakar pour jouer régulièrement.',
+          image: '',
+          category: 'sports',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Fitness et Musculation Étudiants',
+          description: 'Conseils fitness, programmes d\'entraînement adaptés aux étudiants, recommandations de salles de sport abordables à Dakar, et motivation entre membres.',
+          image: '',
+          category: 'sports',
+          creator: superAdminUser._id,
+          members: [
+            {
+              user: superAdminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        
+        // Other Communities
+        {
+          name: 'Échanges Linguistiques Dakar',
+          description: 'Pratiquez et perfectionnez vos langues : français, anglais, wolof, espagnol. Organisez des tandems linguistiques et sessions de conversation entre étudiants.',
+          image: '',
+          category: 'other',
+          creator: adminUser._id,
+          members: [
+            {
+              user: adminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Bénévolat et Actions Solidaires',
+          description: 'Rejoignez des actions bénévoles, associations caritatives, et projets solidaires à Dakar. Contribuez à des causes qui vous tiennent à cœur tout en rencontrant d\'autres étudiants engagés.',
+          image: '',
+          category: 'other',
+          creator: superAdminUser._id,
+          members: [
+            {
+              user: superAdminUser._id,
+              role: 'owner',
+              joinedAt: new Date()
+            }
+          ],
+          posts: [],
+          isPublic: true,
+          isActive: true
+        },
+        {
+          name: 'Lecture et Club de Livres',
+          description: 'Club de lecture pour étudiants passionnés de livres. Partagez vos coups de cœur, participez à des échanges littéraires, et découvrez la bibliothèque universitaire.',
+          image: '',
+          category: 'other',
           creator: adminUser._id,
           members: [
             {
@@ -647,6 +948,7 @@ const seedProductionData = async () => {
       ];
 
       await Community.insertMany(communities);
+      communitiesCreated = communities.length;
       console.log(`✅ Created ${communities.length} communities`);
     }
 
@@ -656,7 +958,7 @@ const seedProductionData = async () => {
     console.log(`   - Formations: ${formations.length}`);
     console.log(`   - Services: ${services.length}`);
     console.log(`   - Events: ${events.length}`);
-    console.log(`   - Communities: 6`);
+    console.log(`   - Communities: ${communitiesCreated}`);
 
   } catch (error) {
     console.error('❌ Error seeding production data:', error);

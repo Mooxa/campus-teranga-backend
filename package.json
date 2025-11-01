@@ -19,6 +19,7 @@
     "seed": "node src/scripts/seed_robust.js",
     "seed:dev": "node src/scripts/seed_development.js",
     "seed:prod": "node src/scripts/seed_production.js",
+    "extract:communities": "node extract_communities.js",
     "docker:build": "docker build -t campus-teranga-backend .",
     "docker:run": "docker run -p 3000:3000 campus-teranga-backend",
     "docker:compose": "docker-compose up -d"
