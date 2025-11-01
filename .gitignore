@@ -100,3 +100,7 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Data export files
+*_export_*.json
+*_export_*.csv
