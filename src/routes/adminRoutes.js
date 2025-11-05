@@ -740,6 +740,57 @@ router.get('/communities/:id', async (req, res) => {
   }
 });
 
+// Create community (admin)
+router.post('/communities', async (req, res) => {
+  try {
+    const { name, description, image, category, isPublic, isActive } = req.body;
+    
+    // Check if community name already exists
+    const existingCommunity = await Community.findOne({ name });
+    if (existingCommunity) {
+      return res.status(400).json({
+        success: false,
+        message: 'A community with this name already exists'
+      });
+    }
+    
+    const community = new Community({
+      name,
+      description,
+      image: image || '',
+      category: category || 'social',
+      isPublic: isPublic !== undefined ? isPublic : true,
+      isActive: isActive !== undefined ? isActive : true,
+      creator: req.user._id,
+      members: [{
+        user: req.user._id,
+        role: 'owner',
+        joinedAt: new Date()
+      }]
+    });
+    
+    await community.save();
+    
+    const populatedCommunity = await Community.findById(community._id)
+      .populate('creator', 'fullName email')
+      .populate('members.user', 'fullName email')
+      .lean();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Community created successfully',
+      data: populatedCommunity
+    });
+  } catch (error) {
+    console.error('Create community error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error creating community',
+      error: error.message 
+    });
+  }
+});
+
 router.put('/communities/:id', async (req, res) => {
   try {
     const { name, description, image, category, isPublic, isActive } = req.body;
