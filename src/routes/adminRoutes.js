@@ -662,7 +662,7 @@ router.delete('/services/:id', async (req, res) => {
 // GET all communities
 router.get('/communities', async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, category, isActive } = req.query;
+    const { page = 1, limit = 10, search, category, isActive, isApproved } = req.query;
     const query = {};
     
     if (search) {
@@ -680,9 +680,15 @@ router.get('/communities', async (req, res) => {
       query.isActive = isActive === 'true';
     }
     
+    // Allow filtering by approval status
+    if (isApproved !== undefined) {
+      query.isApproved = isApproved === 'true';
+    }
+    
     const communities = await Community.find(query)
       .populate('creator', 'fullName email phoneNumber')
       .populate('members.user', 'fullName email')
+      .populate('approvedBy', 'fullName email')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -738,7 +744,11 @@ router.post('/communities', async (req, res) => {
         user: req.user._id,
         role: 'owner',
         joinedAt: new Date()
-      }]
+      }],
+      // Admin-created communities are automatically approved
+      isApproved: true,
+      approvedBy: req.user._id,
+      approvedAt: new Date()
     });
     
     await community.save();
@@ -846,6 +856,83 @@ router.delete('/communities/:id', async (req, res) => {
     res.status(500).json({ 
       success: false,
       message: 'Error deleting community',
+      error: error.message 
+    });
+  }
+});
+
+// POST approve community
+router.post('/communities/:id/approve', async (req, res) => {
+  try {
+    const community = await Community.findByIdAndUpdate(
+      req.params.id,
+      {
+        isApproved: true,
+        approvedBy: req.user._id,
+        approvedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    )
+      .populate('creator', 'fullName email')
+      .populate('members.user', 'fullName email')
+      .populate('approvedBy', 'fullName email')
+      .lean();
+    
+    if (!community) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Community not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Community approved successfully',
+      data: community
+    });
+  } catch (error) {
+    console.error('Approve community error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error approving community',
+      error: error.message 
+    });
+  }
+});
+
+// POST reject community
+router.post('/communities/:id/reject', async (req, res) => {
+  try {
+    const community = await Community.findByIdAndUpdate(
+      req.params.id,
+      {
+        isApproved: false,
+        approvedBy: null,
+        approvedAt: null
+      },
+      { new: true, runValidators: true }
+    )
+      .populate('creator', 'fullName email')
+      .populate('members.user', 'fullName email')
+      .lean();
+    
+    if (!community) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Community not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Community rejected successfully',
+      data: community
+    });
+  } catch (error) {
+    console.error('Reject community error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error rejecting community',
       error: error.message 
     });
   }

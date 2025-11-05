@@ -10,6 +10,10 @@ router.get('/', async (req, res) => {
     const { category, search, isPublic = true, isActive = true } = req.query;
     let query = { isActive: isActive === 'true' || isActive === true };
     
+    // Only show approved communities for regular users
+    // Admins can see all communities via /admin/communities
+    query.isApproved = true;
+    
     if (category) {
       query.category = category;
     }
@@ -100,7 +104,9 @@ router.post('/', auth, async (req, res) => {
         user: req.user.userId,
         role: 'owner',
         joinedAt: new Date()
-      }]
+      }],
+      // Regular users need approval, so set isApproved to false
+      isApproved: false
     });
     
     await community.save();
@@ -112,7 +118,7 @@ router.post('/', auth, async (req, res) => {
     
     res.status(201).json({
       success: true,
-      message: 'Community created successfully',
+      message: 'Community created successfully. It will be visible after admin approval.',
       data: populatedCommunity
     });
   } catch (error) {
