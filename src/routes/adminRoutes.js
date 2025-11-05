@@ -659,6 +659,7 @@ router.delete('/services/:id', async (req, res) => {
 });
 
 // Community Management Routes
+// GET all communities
 router.get('/communities', async (req, res) => {
   try {
     const { page = 1, limit = 10, search, category, isActive } = req.query;
@@ -711,36 +712,7 @@ router.get('/communities', async (req, res) => {
   }
 });
 
-router.get('/communities/:id', async (req, res) => {
-  try {
-    const community = await Community.findById(req.params.id)
-      .populate('creator', 'fullName email phoneNumber')
-      .populate('members.user', 'fullName email phoneNumber')
-      .populate('posts.author', 'fullName email')
-      .lean();
-    
-    if (!community) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Community not found' 
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: community
-    });
-  } catch (error) {
-    console.error('Get community error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error fetching community',
-      error: error.message 
-    });
-  }
-});
-
-// Create community (admin)
+// POST create community (must be before /communities/:id routes)
 router.post('/communities', async (req, res) => {
   try {
     const { name, description, image, category, isPublic, isActive } = req.body;
@@ -791,6 +763,37 @@ router.post('/communities', async (req, res) => {
   }
 });
 
+// GET single community (must be after POST /communities)
+router.get('/communities/:id', async (req, res) => {
+  try {
+    const community = await Community.findById(req.params.id)
+      .populate('creator', 'fullName email phoneNumber')
+      .populate('members.user', 'fullName email phoneNumber')
+      .populate('posts.author', 'fullName email')
+      .lean();
+    
+    if (!community) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Community not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: community
+    });
+  } catch (error) {
+    console.error('Get community error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching community',
+      error: error.message 
+    });
+  }
+});
+
+// PUT update community
 router.put('/communities/:id', async (req, res) => {
   try {
     const { name, description, image, category, isPublic, isActive } = req.body;
